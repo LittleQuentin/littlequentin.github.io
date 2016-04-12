@@ -11,7 +11,7 @@
 <meta property="og:url" content="http://yoursite.com/2016/04/12/BZOJ2668交换棋子-费用流/index.html">
 <meta property="og:site_name" content="LittleRed">
 <meta property="og:description" content="题意：给定一张N*M的黑白棋子图的初始状态，每次可以交换两个相邻（对角）位置上的棋子，每个格子交换次数有限制，求最少交换几次能变成给定的目标状态。">
-<meta property="og:updated_time" content="2016-04-12T12:15:34.255Z">
+<meta property="og:updated_time" content="2016-04-12T12:49:45.007Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="BZOJ2668交换棋子  费用流">
 <meta name="twitter:description" content="题意：给定一张N*M的黑白棋子图的初始状态，每次可以交换两个相邻（对角）位置上的棋子，每个格子交换次数有限制，求最少交换几次能变成给定的目标状态。">
@@ -89,12 +89,16 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>题意：给定一张N*M的黑白棋子图的初始状态，每次可以交换两个相邻（对角）位置上的棋子，每个格子交换次数有限制，求最少交换几次能变成给定的目标状态。<br><a id="more"></a><br>我们考虑起始状态每一个黑色的棋子，那么肯定是要把这些棋子都移到终点上，那么就从源点到所有起始状态的黑点连边，所有结束状态的黑子到汇点连边，流量为1费用为0。<br>然后对于每个点，显然我们假如交换两个位置上的棋子，就相当于是把某个位置上的黑色棋子移到了白子的位置上，因为把黑子和黑子交换肯定不会产生最优解。对于每个点都向它能到达的节点连一条流量为无限，费用为1的边，表示交换一次。<br>接下来我们就要考虑限制。因为题目的要求是每个点交换次数有限，所以就要把每个点拆成两个，中间连边来控制流量。<br>这时候有四种情况：<br>1.起始状态和结束状态在该点上都没有黑子：每次把一颗黑子从这里移走显然都要交换两次，所以流量是cap/2;<br>2.起始状态在该点上有黑子：把黑子从这里移走只需要一次，之后让一颗黑子经过这个点需要两次，流量是(cap+1)/2;<br>3.结束状态在该点上有黑子: 仔细一想其实和前面是一样的，流量也是(cap+1)/2;<br>4.起始状态和结束状态在该点上都有黑子：考虑把黑子移出去，把另一个黑子移进来，这样2次就能够改变2个棋子的位置，剩下要让其它棋子经过这里就需要两次了，所以流量是(cap-2)/2+2。<br>当然这些边都是不需要费用的。</p>
+        <p>题意：给定一张N*M的黑白棋子图的初始状态，每次可以交换两个相邻（对角）位置上的棋子，每个格子交换次数有限制，求最少交换几次能变成给定的目标状态。<br><a id="more"></a><br>我们考虑起始状态每一个黑色的棋子，那么肯定是要把这些棋子都移到终点上，那么就从源点到所有起始状态的黑点连边，所有结束状态的黑子到汇点连边，流量为1费用为0。<br>然后对于每个点，显然我们假如交换两个位置上的棋子，就相当于是把某个位置上的黑色棋子移到了白子的位置上，因为把黑子和黑子交换肯定不会产生最优解。对于每个点都向它能到达的节点连一条流量为无限，费用为1的边，表示交换一次。<br>接下来我们就要考虑限制。因为题目的要求是每个点交换次数有限，所以就要把每个点拆成两个，中间连边来控制流量。<br>这时候有四种情况：<br>1.起始状态和结束状态在该点上都没有黑子：每次把一颗黑子从这里移走显然都要交换两次，所以流量是cap/2;<br>2.起始状态在该点上有黑子：把黑子从这里移走只需要一次，之后让一颗黑子经过这个点需要两次，流量是(cap+1)/2;<br>3.结束状态在该点上有黑子: 仔细一想其实和前面是一样的，流量也是(cap+1)/2;<br>4.起始状态和结束状态在该点上都有黑子：考虑把黑子移出去，把另一个黑子移进来，这样2次就能够改变2个棋子的位置，剩下要让其它棋子经过这里就需要两次了，所以流量是(cap-2)/2+2。<br>当然这些边都是不需要费用的。<br>```C++</p>
+<p>#include<cstdio></cstdio></p>
+<p>#include<cstring></cstring></p>
+<p>#include<queue></queue></p>
+<p>using namespace std;<br>const int INF=1e9;<br>const int N=21;<br>const int P=2<em>N</em>N;<br>int n,m,start,end,ans1,ans2;<br>int lines,front[P];<br>struct edge{int next,to,cap,wei;}e[P<em>N</em>N];<br>void addline(int x,int y,int c,int w){<br>    e[++lines]=(edge){front[x],y,c,w};front[x]=lines;<br>    e[++lines]=(edge){front[y],x,0,-w};front[y]=lines;<br>}<br>queue<int>que;<br>int dist[P],pre[P],prv[P];<br>bool inq[P];<br>bool Spfa(){<br>    memset(dist,127,sizeof(dist));<br>    memset(pre,0,sizeof(pre));<br>    memset(prv,0,sizeof(prv));<br>    memset(inq,0,sizeof(inq));<br>    while (!que.empty()) que.pop();<br>    que.push(start);inq[start]=true;dist[start]=0;<br>    while (!que.empty()){<br>        int u=que.front();que.pop();<br>        for (int i=front[u],v;i!=-1;i=e[i].next)<br>            if (e[i].cap &amp;&amp; dist[u]+e[i].wei<dist[v=e[i].to]){ dist[v]="dist[u]+e[i].wei;" pre[v]="u,prv[v]=i;" if="" (!inq[v]){que.push(v);inq[v]="true;}" }="" inq[u]="false;" return="" dist[end]<inf;="" void="" ek(){="" int="" res_flow="0,res_cost=0;" while="" (spfa()){="" flow="INF;" for="" (int="" i="end;i!=start;i=pre[i])" e[prv[i]].cap-="flow;" e[prv[i]^1].cap+="flow;" res_flow+="flow;" res_cost+="flow*dist[end];" printf("%d\n",res_flow!="ans1?-1:res_cost);" const="" dx[8]="{1,0,-1,0,1,-1,1,-1};" dy[8]="{0,1,0,-1,1,1,-1,-1};" char="" sc[n][n],s1[n][n],s2[n][n];="" data[n][n];="" miro(int="" x,int="" y,int="" t){return="" x*m+y+t*n*m;}="" main(){="" scanf("%d%d",&n,&m);="" start="2*n*m;end=start+1;" lines="-1;" memset(front,-1,sizeof(front));="" scanf("%s",s1[i]);="" scanf("%s",s2[i]);="" scanf("%s",sc[i]);="" j="0;j<m;j++){" (s1[i][j]="='1')" addline(start,miro(i,j,0),1,0),ans1++;="" (s2[i][j]="='1')" addline(miro(i,j,1),end,1,0),ans2++;="" c="s1[i][j]+s2[i][j]+sc[i][j]-48*3;" addline(miro(i,j,0),miro(i,j,1),c="" 2,0);="" k="0;k<8;k++){" x="i+dx[k],y=j+dy[k];" (x<0="" or="">=n or y<0 or="" y="">=m) continue;<br>                addline(miro(i,j,1),miro(x,y,0),INF,1);<br>            }<br>        }<br>    EK();<br>}<br>```C++</0></dist[v=e[i].to]){></int></p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2016/04/12/BZOJ2668交换棋子-费用流/" data-id="cimxev23f0000dsv98vjzq93h" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2016/04/12/BZOJ2668交换棋子-费用流/" data-id="cimxfe9f30000r4v93gdyp3iq" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/网络流/">网络流</a></li></ul>
