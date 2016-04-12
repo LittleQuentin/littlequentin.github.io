@@ -5,16 +5,16 @@
   
   <title>BZOJ2330 糖果 差分约束 | LittleRed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description">
+  <meta name="description" content="题意：给定一些点之间大于、小于、等于的关系，现在让你给每个点都赋上正整数权值，要在满足条件的要求下使所有点的权值和最小。100000个点和关系组数。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="BZOJ2330 糖果 差分约束">
 <meta property="og:url" content="http://yoursite.com/2016/04/13/BZOJ2330-糖果-差分约束/index.html">
 <meta property="og:site_name" content="LittleRed">
-<meta property="og:description">
-<meta property="og:updated_time" content="2016-04-12T23:28:32.602Z">
+<meta property="og:description" content="题意：给定一些点之间大于、小于、等于的关系，现在让你给每个点都赋上正整数权值，要在满足条件的要求下使所有点的权值和最小。100000个点和关系组数。">
+<meta property="og:updated_time" content="2016-04-12T23:52:52.980Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="BZOJ2330 糖果 差分约束">
-<meta name="twitter:description">
+<meta name="twitter:description" content="题意：给定一些点之间大于、小于、等于的关系，现在让你给每个点都赋上正整数权值，要在满足条件的要求下使所有点的权值和最小。100000个点和关系组数。">
   
     <link rel="alternate" href="/atom.xml" title="LittleRed" type="application/atom+xml">
   
@@ -89,13 +89,16 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <p>题意：给定一些点之间大于、小于、等于的关系，现在让你给每个点都赋上正整数权值，要在满足条件的要求下使所有点的权值和最小。100000个点和关系组数。<br><a id="more"></a><br>我们考虑差分约束系统，x–&gt;y的一条权值为w的边表示x至少比y要小w。那么我们就可以把所有的关系都转化成边了。<br>x大于y：y至少比x小1<br>x小于y：x至少比y小1<br>x小于等于y：x至少比y小0<br>x大于等于y：x至少比y大0<br>x等于y：x至少比y小0，y至少比x小0<br>然后再连边保证所有点都至少比0大1（注意这个地方要根据数据特殊优化一下，有一个点是100000个点的一条链，Spfa会被卡掉，所以我们从第n~1个点开始从0连边，而不是1~n）。<br>Spfa使用队列优化的话，注意直接判掉自环的情况，如x大（小）于x自己。<br>那么从0出发的最长路就是每个点最少的权值了，如果出现正环就说明这张图无法满足要求。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;queue&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> N=<span class="number">100005</span>;</span><br><span class="line"><span class="keyword">int</span> n,m;</span><br><span class="line"><span class="keyword">int</span> lines,front[N];</span><br><span class="line"><span class="keyword">struct</span> edge&#123;<span class="keyword">int</span> next,to,wei;&#125;e[N*<span class="number">5</span>];</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">addline</span><span class="params">(<span class="keyword">int</span> x,<span class="keyword">int</span> y,<span class="keyword">int</span> w)</span></span>&#123;e[++lines]=(edge)&#123;front[x],y,w&#125;;front[x]=lines;&#125;</span><br><span class="line"><span class="keyword">int</span> dist[N],cirs[N];</span><br><span class="line"><span class="built_in">queue</span>&lt;<span class="keyword">int</span>&gt;que;</span><br><span class="line"><span class="keyword">bool</span> inq[N];</span><br><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">Spfa</span><span class="params">()</span></span>&#123;</span><br><span class="line">	inq[dist[<span class="number">0</span>]=<span class="number">0</span>]=<span class="literal">true</span>;cirs[<span class="number">0</span>]=<span class="number">1</span>;</span><br><span class="line">	que.push(<span class="number">0</span>);</span><br><span class="line">	<span class="keyword">while</span> (!que.empty())&#123;</span><br><span class="line">		<span class="keyword">int</span> u=que.front();que.pop();</span><br><span class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i=front[u],v;i!=<span class="number">0</span>;i=e[i].next)</span><br><span class="line">			<span class="keyword">if</span> (dist[u]+e[i].wei&gt;dist[v=e[i].to])&#123;</span><br><span class="line">				dist[v]=dist[u]+e[i].wei;</span><br><span class="line">				<span class="keyword">if</span> (!inq[v])&#123;que.push(v);inq[v]=<span class="literal">true</span>;<span class="keyword">if</span> (++cirs[v]&gt;=n) return <span class="literal">false</span>;&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			inq[u]=<span class="literal">false</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	return <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">	<span class="built_in">scanf</span>(<span class="string">"%d%d"</span>,&amp;n,&amp;m);</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">1</span>,t,x,y;i&lt;=m;i++)&#123;</span><br><span class="line">		<span class="built_in">scanf</span>(<span class="string">"%d%d%d"</span>,&amp;t,&amp;x,&amp;y);</span><br><span class="line">		<span class="keyword">switch</span> (t)&#123;</span><br><span class="line">			<span class="keyword">case</span> <span class="number">1</span>:addline(x,y,<span class="number">0</span>),addline(y,x,<span class="number">0</span>);<span class="keyword">break</span>;</span><br><span class="line">			<span class="keyword">case</span> <span class="number">2</span>:<span class="keyword">if</span> (x==y)&#123;<span class="built_in">printf</span>(<span class="string">"-1\n"</span>);return <span class="number">0</span>;&#125;addline(x,y,<span class="number">1</span>);<span class="keyword">break</span>;</span><br><span class="line">			<span class="keyword">case</span> <span class="number">3</span>:addline(y,x,<span class="number">0</span>);<span class="keyword">break</span>;</span><br><span class="line">			<span class="keyword">case</span> <span class="number">4</span>:<span class="keyword">if</span> (x==y)&#123;<span class="built_in">printf</span>(<span class="string">"-1\n"</span>);return <span class="number">0</span>;&#125;addline(y,x,<span class="number">1</span>);<span class="keyword">break</span>;</span><br><span class="line">			<span class="keyword">case</span> <span class="number">5</span>:addline(x,y,<span class="number">0</span>);<span class="keyword">break</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i=n;i&gt;<span class="number">0</span>;i--) addline(<span class="number">0</span>,i,<span class="number">1</span>);</span><br><span class="line">	<span class="keyword">if</span> (!Spfa())&#123;<span class="built_in">printf</span>(<span class="string">"-1\n"</span>);return <span class="number">0</span>;&#125;</span><br><span class="line">	<span class="keyword">long</span> <span class="keyword">long</span> ans=<span class="number">0</span>;</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">1</span>;i&lt;=n;i++) ans+=dist[i];</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">"%lld\n"</span>,ans);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2016/04/13/BZOJ2330-糖果-差分约束/" data-id="cimy2hu5s000078r3wp0tqwdr" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2016/04/13/BZOJ2330-糖果-差分约束/" data-id="cimy31h5u0000ogr3hybyqv9j" class="article-share-link">Share</a>
       
       
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/差分约束/">差分约束</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/最短路/">最短路</a></li></ul>
+
     </footer>
   </div>
   
@@ -124,7 +127,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络流/">网络流</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/差分约束/">差分约束</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/最短路/">最短路</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络流/">网络流</a></li></ul>
     </div>
   </div>
 
@@ -134,7 +137,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/网络流/" style="font-size: 10px;">网络流</a>
+      <a href="/tags/差分约束/" style="font-size: 10px;">差分约束</a> <a href="/tags/最短路/" style="font-size: 10px;">最短路</a> <a href="/tags/网络流/" style="font-size: 10px;">网络流</a>
     </div>
   </div>
 
